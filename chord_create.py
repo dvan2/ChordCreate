@@ -11,6 +11,8 @@ MINOR_CHORD = [0, 3, 7]
 MAJOR_SCALES = [0, 2, 4, 5, 7, 9, 11, 0]
 MINOR_SCALES = [0, 2, 3, 5, 7, 8, 10, 0]
 
+# Where to save pickled files
+PICKLED_FOLDER = 'pickled_files'
 
 def main():
     print(
@@ -19,6 +21,7 @@ def main():
     print(
         "You can also create your own chord progression, transpose, save and load them back."
     )
+    time.sleep(1)
 
     while True:
         print_line()
@@ -51,7 +54,7 @@ def main():
                     song.transpose()
                 if write_selection == 4:
                     print(song)
-                    time.sleep(2)
+                    time.sleep(3)
                 if write_selection == 5:
                     song.save_song()
                 if write_selection == -1:
@@ -115,6 +118,7 @@ def create_song():
 
 def interact_load_song():
     while True:
+        display_existing_files()
         name = input("\nEnter an existing file: ")
         print()
         try:
@@ -131,6 +135,18 @@ def interact_load_song():
             print(f"\n\nError, Cannot find song name of: {name}")
             pass
 
+
+def display_existing_files():
+    if os.path.exists(PICKLED_FOLDER) and os.path.isdir(PICKLED_FOLDER):
+        files = os.listdir(PICKLED_FOLDER)
+
+        pickled_files = [os.path.splitext(file)[0] for file in files if file.endswith('.pk1')]
+
+        print("Currently saved songs: ")
+        for file in pickled_files:
+            print(file)
+    else:
+        print("There are no saved songs yet")
 
 
 def interact_chord(m_chord):
@@ -247,7 +263,6 @@ def is_valid_chords(chords):
             if chord not in NOTES:
                 if chord != "-" and chord != "_" and chord!= 'm' and chord!='#' and chord!= 'b':
                     raise ValueError(f"{chord} is invalid")
-    return True
 
 
 def generate_file_path(folder, file_name, ext):
@@ -258,7 +273,7 @@ def generate_file_path(folder, file_name, ext):
 
 class Song:
     def __init__(self, name):
-        self.file_path = generate_file_path('pickled_files', name, '.pk1')
+        self.file_path = generate_file_path(PICKLED_FOLDER, name, '.pk1')
         if os.path.isfile(self.file_path):
             raise ValueError("Song already exists")
         self.name = name
@@ -267,17 +282,43 @@ class Song:
 
     def create_section(self):
         print_line()
+        if len(self.sections) == 0:
+            print("There are no sections yet.")
+        else:
+            result = "Existing sections\n"
+            for sec in self.sections:
+                result += sec + "\n"
+            print(result)
         section = input(
-            "Enter the section name: Intro, Verse, Chorus, Instrumental, etc: "
+            "Enter a name for the new section: Intro, Verse, Chorus, Instrumental, etc: "
         )
-        chords = input(f"Write out the chord progression for the {section}\n")
-        if is_valid_chords(chords):
-            self.sections[section] = chords
+        print_line()
+        chords = ""
+        print(f'Write out a new chord progression for the {section}\nEnter -1 to finish')
+        print("Chord Progression:")
+        while True:
+            chord_input = input()
+            try:
+                if chord_input == "-1":
+                    break
+                else:
+                    is_valid_chords(chords)
+                    chords += chord_input + '\n'
+            except ValueError as e:
+                print(e)
+                pass
+        self.sections[section] = chords
+                
+
+
+
+
 
     def get_title(self):
         return self.name
 
     def __str__(self):
+        print_line()
         result = f"{self.name}\n\n"
         for section, chords in self.sections.items():
             result += f"{section}:\n{chords}\n"
@@ -295,9 +336,10 @@ class Song:
         self.save_song_pickle()
         prompt = f'{self.name} saved at {file_path}'
         print_animated(prompt, 0.03)
+        time.sleep(0.8)
 
     def save_song_pickle(self):
-        folder = 'pickled_files'
+        folder = PICKLED_FOLDER
         if not os.path.exists(folder):
             os.makedirs(folder)
 
@@ -306,7 +348,7 @@ class Song:
 
     @classmethod
     def load_song(cls, name):
-        file_path = generate_file_path('pickled_files', name, '.pk1')
+        file_path = generate_file_path(PICKLED_FOLDER, name, '.pk1')
         with open(file_path, 'rb') as file:
             result_song = pickle.load(file)
         return result_song
@@ -341,7 +383,10 @@ class Song:
                     #re run the function
                     self.edit_section()
                     return
-            is_valid_chords(new_chords)
+            try:
+                is_valid_chords(new_chords)
+            except ValueError as e:
+                print(e)
             self.sections[new_sec] = new_chords
             print(f"{new_sec} updated to:\n {new_chords}")
 
@@ -376,12 +421,11 @@ class Song:
                 self.sections[section] = result
 
 
-def progression():
-    name = input("Name for the song: ")
-    song = Song(name)
+# def progression():
+#     name = input("Name for the song: ")
+#     song = Song(name)
 
-    song.create_section(section, chords)
-    song.save_song()
+#     song.save_song()
 
 
 if __name__ == "__main__":
