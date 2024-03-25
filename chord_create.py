@@ -5,6 +5,8 @@ import time
 NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 SIZE = len(NOTES)
 
+VALID_SYMBOLS = ["#", "b", "m", "M", "7" "dim", "sus"]
+
 MAJOR_CHORD = [0, 4, 7]
 MINOR_CHORD = [0, 3, 7]
 
@@ -14,6 +16,14 @@ MINOR_SCALES = [0, 2, 3, 5, 7, 8, 10, 0]
 # Where to save pickled files
 PICKLED_FOLDER = 'pickled_files'
 
+# Used for displaying song
+DISPLAY_PAUSE = 2.5
+MEDIUM_PAUSE = 1.2
+QUICK_PAUSE = 0.8
+
+x_emoji = "❌ "
+check_emoji = "✅"
+
 def main():
     print(
         "\n\n\n\n\n\n\nHello.  This program allows you to learn about chords and scales."
@@ -21,7 +31,7 @@ def main():
     print(
         "You can also create your own chord progression, transpose, save and load them back."
     )
-    time.sleep(1)
+    time.sleep(1.5)
 
     while True:
         print_line()
@@ -47,14 +57,14 @@ def main():
                     "1 to create a new section for this song\n2 to edit a section for this song\n3 to transpose this song to a different key\n4 to display the song\n5 to save the song", 5
                 )
                 if write_selection == 1:
-                    song.create_section()
+                    song.create_new_section()
                 if write_selection == 2:
                     song.edit_section()
                 if write_selection == 3:
                     song.transpose()
                 if write_selection == 4:
                     print(song)
-                    time.sleep(3)
+                    time.sleep(DISPLAY_PAUSE)
                 if write_selection == 5:
                     song.save_song()
                 if write_selection == -1:
@@ -130,9 +140,12 @@ def interact_load_song():
             pass
         try:
             song = Song.load_song(name)
+            prompt = (f'{check_emoji} Found Song: {song.name}')
+            print_animated(prompt)
+            time.sleep(QUICK_PAUSE)
             return song
         except FileNotFoundError:
-            print(f"\n\nError, Cannot find song name of: {name}")
+            print(f"\n\n{x_emoji}Error, Cannot find song name of: {name}")
             pass
 
 
@@ -192,7 +205,7 @@ def get_selection(prompt, menu_size):
             pass
         else:
             if res > menu_size:
-                print(f"Invalid selection: {res}. Enter a smaller number")
+                print(f"{x_emoji}Invalid selection: {res}. Enter a smaller number")
             elif res < -1:
                 print(f"Invalid selection: {res}. Enter a bigger number")
             else:
@@ -212,10 +225,17 @@ def get_yes_no(prompt):
             elif res == -1:
                 return False
 
-def print_animated(prompt, speed=0.05):
-    for c in prompt:
-        print(c, end = "", flush = True)
-        time.sleep(speed)
+def print_animated(prompt, initial_speed=0.05, acceleration = 0.0008):
+    speed = initial_speed
+    for i, c in enumerate(prompt, start=1):
+        print(c, end="", flush=True)
+        if speed > 0:
+            time.sleep(speed)
+        else:
+            time.sleep(0)
+        # Increase speed gradually
+        speed -= acceleration * i
+
 
 
 
@@ -261,7 +281,7 @@ def is_valid_chords(chords):
     for chord in chords:
         if chord != " ":
             if chord not in NOTES:
-                if chord != "-" and chord != "_" and chord!= 'm' and chord!='#' and chord!= 'b':
+                if chord != "-" and chord != "_" and chord!= 'm' and chord!='#' and chord!= 'b' and chord!= '\n' and chord!= ' ':
                     raise ValueError(f"{chord} is invalid")
 
 
@@ -270,6 +290,24 @@ def generate_file_path(folder, file_name, ext):
     file_path = os.path.join(folder, file_name)
     return file_path
 
+def create_chord_progression_section():
+    chords = ""
+    while True:
+        chord_input = input()
+        try:
+            if chord_input == "-1":
+                return chords
+            else:
+                is_valid_chords(chords)
+                chords += chord_input + '\n'
+        except ValueError as e:
+            print(e)
+            print("Please rewrite the section")
+            chord = ""
+            pass
+
+
+
 
 class Song:
     def __init__(self, name):
@@ -277,10 +315,11 @@ class Song:
         if os.path.isfile(self.file_path):
             raise ValueError("Song already exists")
         self.name = name
+        self.transpose_amount = 0
         self.sections = {}
 
 
-    def create_section(self):
+    def create_new_section(self):
         print_line()
         if len(self.sections) == 0:
             print("There are no sections yet.")
@@ -289,40 +328,38 @@ class Song:
             for sec in self.sections:
                 result += sec + "\n"
             print(result)
-        section = input(
-            "Enter a name for the new section: Intro, Verse, Chorus, Instrumental, etc: "
-        )
+        while True:
+            section = input(
+                "Enter a name for the new section: Intro, Verse, Chorus, Instrumental, etc: "
+            )
+            print_line()
+            if section in self.sections:
+                print(f'{x_emoji} {section} already exists.')
+            elif section == '-1':
+                return
+            else:
+                break
         print_line()
-        chords = ""
         print(f'Write out a new chord progression for the {section}\nEnter -1 to finish')
         print("Chord Progression:")
-        while True:
-            chord_input = input()
-            try:
-                if chord_input == "-1":
-                    break
-                else:
-                    is_valid_chords(chords)
-                    chords += chord_input + '\n'
-            except ValueError as e:
-                print(e)
-                pass
+        chords = create_chord_progression_section()
         self.sections[section] = chords
+        prompt = f'New section: {section}, added...'
+        print_animated(prompt)
+        time.sleep(QUICK_PAUSE)
+        print(self, end='')
+        time.sleep(DISPLAY_PAUSE)
                 
-
-
-
-
-
+    
     def get_title(self):
         return self.name
 
     def __str__(self):
         print_line()
-        result = f"{self.name}\n\n"
+        result = f"\t\t{self.name}\n\n"
         for section, chords in self.sections.items():
-            result += f"{section}:\n{chords}\n"
-        return result
+            result += f"{section}:\n{chords}\n\n"
+        return result[:-2]
 
     # Using pickle to store object
     # https://www.geeksforgeeks.org/how-to-use-pickle-to-save-and-load-variables-in-python/
@@ -334,7 +371,7 @@ class Song:
         with open(file_path, "w") as file:
             file.write(str(self))
         self.save_song_pickle()
-        prompt = f'{self.name} saved at {file_path}'
+        prompt = f'{self.name} saved in {file_path}'
         print_animated(prompt, 0.03)
         time.sleep(0.8)
 
@@ -354,78 +391,125 @@ class Song:
         return result_song
 
     def edit_section(self):
-        if len(self.sections) == 0:
-            print("There are no song sections yet. Consider creating new section")
-            return
-        print_line()
-        result = "Available sections to edit: \n"
-        for sec in self.sections:
-            result += sec + "\n"
-        print(result)
+        while True:
+            if len(self.sections) == 0:
+                print("There are no song sections yet. Consider creating new section")
+                return
+            print_line()
+            result = "Available sections to edit: \n"
+            for sec in self.sections:
+                result += sec + "\n"
+            print(result)
 
-        new_sec = input("Enter a section to edit: ")
-        print_line()
-        if new_sec in self.sections:
-            result = ''
-            print(f'Editing {new_sec} Section:\n{self.sections[new_sec]}\n')
-            print("Hint: You can enter nothing to delete the section")
-            new_chords = input(f"Enter new chord progression for the {new_sec}:")
-            if new_chords == "":
-                prompt = f'Do you want to delete {new_sec}'
-                del_res = get_yes_no(prompt)
-                if del_res:
-                    del self.sections[new_sec]
-                    prompt = f'{new_sec} deleted'
-                    print_animated(prompt)
-                    time.sleep(1)
+            new_sec = input("Enter a section to edit: ").strip()
+            if new_sec == '-1':
+                continue
+            print_line()
+            if new_sec in self.sections:
+                result = ''
+                prompt = (f'Editing {new_sec} Section:')
+                print_animated(prompt)
+                print(f'\n{self.sections[new_sec]}\n')
+                print("Hint: You can enter nothing to delete the section")
+                new_chords = input(f"Enter new chord progression for the {new_sec}: ")
+                if new_chords == "-1":
                     return
-                else:
-                    #re run the function
-                    self.edit_section()
-                    return
-            try:
-                is_valid_chords(new_chords)
-            except ValueError as e:
-                print(e)
-            self.sections[new_sec] = new_chords
-            print(f"{new_sec} updated to:\n {new_chords}")
+                elif new_chords == "":
+                    prompt = f'Do you want to delete {new_sec}'
+                    del_res = get_yes_no(prompt)
+                    if del_res:
+                        del self.sections[new_sec]
+                        prompt = f'{new_sec} deleted'
+                        print_animated(prompt)
+                        time.sleep(QUICK_PAUSE)
+                        print()
+                        print_animated("Updated Song: ")
+                        print(self, end='')
+                        time.sleep(DISPLAY_PAUSE)
+                        return
+                    else:
+                        continue
+                try:
+                    is_valid_chords(new_chords)
+                except ValueError as e:
+                    print(f'{x_emoji}Error: {e}')
+                    print(f'{new_sec} not updated.')
+                    continue
 
-        else:
-            raise ValueError(f"Cannot find {new_sec} in {self.name}")
+                print_line()
+                prompt = (f'Do you want to update {new_sec}?\nFROM:\n')
+                print_animated(prompt)
+                print(f'{self.sections[new_sec]}\n ')
+                print_animated("TO\n")
+                print(self.sections[new_sec])
+                while True:
+                    print(f" 1: Yes\n-1: No")
+                    confirm = input("Input: ")
+                    if confirm == '1':
+                        self.sections[new_sec] = new_chords
+                        prompt = f'{x_emoji}Done!'
+                        print_animated(prompt)
+                        print(f"{new_sec} updated to:\n {new_chords}")
+                        time.sleep(DISPLAY_PAUSE)
+                        return
+                    elif confirm == '-1':
+                        print_animated(f'Aborted editing {new_sec}')
+                        break
+                    else:
+                        print(f"{x_emoji}Input: '{confirm}' is invalid")
+            else:
+                print(f"{x_emoji}Cannot find '{new_sec}' in {self.name}")
 
     """
     Transpose a song up or down(-) some number of semitones
     """
 
     def transpose(self):
-        try:
-            amount = int(
-                input(
-                    "Enter how number of semitones to transpose to: \nNote C to C#: 1 semitone."
-                )
-            )
-        except ValueError:
-            raise ValueError("Input was not a number.")
-        else:
-            for section, chords in self.sections.items():
-                result = ""
-                for chord in chords:
-                    if chord in NOTES:
-                        index = NOTES.index(chord)
-                        if amount < 0:
-                            amount += SIZE
-                        result += NOTES[(amount + index) % SIZE]
-                    else:
-                        result += chord
-                print(f"Chords transposed {amount} semitones")
-                self.sections[section] = result
-
-
-# def progression():
-#     name = input("Name for the song: ")
-#     song = Song(name)
-
-#     song.save_song()
+        """
+        Prompt user and tranpose the song
+        """
+        while True:
+            try:
+                print_line()
+                print("Note: Enter nothing to return to original key written")
+                amount = input("Enter how number of semitones to transpose to: ")
+                print_line()
+                if amount == "":
+                    # Revert what we transposed
+                    amount = -1 * (self.transpose_amount)
+                    self.transpose_amount = 0
+                else:
+                    amount = int(amount)
+                    self.transpose_amount += amount
+            except ValueError:
+                print("Input was not a number")
+                pass
+                # raise ValueError("Input was not a number.")
+            else:
+                for section, chords in self.sections.items():
+                    result = ""
+                    i = 0
+                    while i < len(chords):
+                        chord = chords[i]
+                        if chord in NOTES:
+                            if i + 1 < len(chords):
+                                if chords[i+ 1] == '#':
+                                    # ignore the #
+                                    i += 1
+                                    chord += '#'
+                            index = NOTES.index(chord)
+                            if self.transpose_amount < 0:
+                                amount += SIZE
+                            result += NOTES[(amount + index) % SIZE]
+                        elif chord != "#" or chord != "b":
+                            result += chord
+                        i += 1
+                    print(f"Chords transposed {amount} semitones")
+                    self.sections[section] = result
+                    print_animated("Newly transposed Version:")
+                    print(self, end='')
+                    time.sleep(DISPLAY_PAUSE)
+                    return
 
 
 if __name__ == "__main__":
