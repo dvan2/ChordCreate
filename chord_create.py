@@ -17,13 +17,13 @@ MINOR_SCALES = [0, 2, 3, 5, 7, 8, 10, 0]
 PICKLED_FOLDER = 'pickled_files'
 
 # Used for displaying song
-DISPLAY_PAUSE = 2.5
+DISPLAY_PAUSE = 2
 MEDIUM_PAUSE = 1.2
 QUICK_PAUSE = 0.8
 
 x_emoji = "❌ "
 check_emoji = "✅"
-warning_emoji = "⚠️ "
+warning_emoji = "⚠️  "
 
 def main():
     print(
@@ -150,7 +150,6 @@ def interact_load_song():
             song = Song.load_song(name)
             prompt = (f'{check_emoji} Found Song: {song.name}')
             print_animated(prompt)
-            time.sleep(QUICK_PAUSE)
             return song
         except FileNotFoundError:
             print(f"\n\n{x_emoji}Error, Cannot find song name of: {name}")
@@ -205,8 +204,10 @@ def print_line():
 def get_selection(prompt, menu_size):
     while True:
         try:
+            print_animated(f"\nEnter:\n{prompt}\n-1 to go back or quit the program\n\n" )
+            # time.sleep(QUICK_PAUSE)
             res = int(
-                input(f"\nEnter:\n{prompt}\n-1 to go back or quit the program\n\nInput: ")
+                input("Input: ")
             )
         except ValueError:
             print(f"\nError.  Please enter a number\n")
@@ -233,16 +234,14 @@ def get_yes_no(prompt):
             elif res == -1:
                 return False
 
-def print_animated(prompt, initial_speed=0.05, acceleration = 0.0008):
+def print_animated(prompt, initial_speed=0.04, acceleration = 0.01):
     speed = initial_speed
     for i, c in enumerate(prompt, start=1):
         print(c, end="", flush=True)
-        if speed > 0:
-            time.sleep(speed)
-        else:
-            time.sleep(0)
-        # Increase speed gradually
-        speed -= acceleration
+        if speed > 0.03:
+            speed -= acceleration
+        time.sleep(speed)
+    time.sleep(QUICK_PAUSE)
 
 
 
@@ -358,7 +357,6 @@ class Song:
         prompt = f'New section: {section}, added...'
         self.saved = False
         print_animated(prompt)
-        time.sleep(QUICK_PAUSE)
         print(self, end='')
         time.sleep(DISPLAY_PAUSE)
                 
@@ -387,7 +385,6 @@ class Song:
         self.saved = True
         prompt = f'{self.name} saved in {file_path}'
         print_animated(prompt, 0.03)
-        time.sleep(0.8)
 
     def save_song_pickle(self):
         folder = PICKLED_FOLDER
@@ -406,6 +403,7 @@ class Song:
 
     def edit_section(self):
         while True:
+            print(f'\t\tEditing {self.name}')
             if len(self.sections) == 0:
                 print("There are no song sections yet. Consider creating new section")
                 return
@@ -417,7 +415,7 @@ class Song:
 
             new_sec = input("Enter a section to edit: ").strip()
             if new_sec == '-1':
-                continue
+                break
             print_line()
             if new_sec in self.sections:
                 result = ''
@@ -436,11 +434,9 @@ class Song:
                         self.saved = False
                         prompt = f'{new_sec} deleted'
                         print_animated(prompt)
-                        time.sleep(QUICK_PAUSE)
                         print()
                         print_animated("Updated Song: ")
                         print(self, end='')
-                        time.sleep(DISPLAY_PAUSE)
                         return
                     else:
                         continue
