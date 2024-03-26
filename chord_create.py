@@ -14,7 +14,7 @@ MAJOR_SCALES = [0, 2, 4, 5, 7, 9, 11, 0]
 MINOR_SCALES = [0, 2, 3, 5, 7, 8, 10, 0]
 
 # Where to save pickled files
-PICKLED_FOLDER = 'pickled_files'
+PICKLED_FOLDER = "pickled_files"
 
 # Used for displaying song
 DISPLAY_PAUSE = 2
@@ -24,6 +24,7 @@ QUICK_PAUSE = 0.8
 x_emoji = "❌ "
 check_emoji = "✅"
 warning_emoji = "⚠️  "
+
 
 def main():
     print(
@@ -55,7 +56,8 @@ def main():
                 print_line()
                 print(f"Current song opened: {song.name}")
                 write_selection = get_selection(
-                    "1 to create a new section for this song\n2 to edit a section for this song\n3 to transpose this song to a different key\n4 to display the song\n5 to save the song", 5
+                    "1 to create a new section for this song\n2 to edit a section for this song\n3 to transpose this song to a different key\n4 to display the song\n5 to save the song",
+                    5,
                 )
                 if write_selection == 1:
                     song.create_new_section()
@@ -70,7 +72,7 @@ def main():
                     song.save_song()
                 if write_selection == -1:
                     if song.saved == False:
-                        prompt = f'{warning_emoji}Warning... There are unsaved changes to {song.name}.  Quit with out saving?\n'
+                        prompt = f"{warning_emoji}Warning... There are unsaved changes to {song.name}.  Quit with out saving?\n"
                         user_yes = get_yes_no(prompt)
                         if user_yes:
                             break
@@ -115,14 +117,15 @@ def main():
         if selection == -1:
             break
 
+
 def create_song():
     while True:
         name = input("\n\nEnter a name for the song: ")
         print()
         try:
             out = int(name)
-            if out== -1:
-                #go back to main menu
+            if out == -1:
+                # go back to main menu
                 return -1
         except ValueError:
             pass
@@ -134,6 +137,7 @@ def create_song():
             print("Consider loading the song instead.")
             pass
 
+
 def interact_load_song():
     while True:
         display_existing_files()
@@ -141,14 +145,15 @@ def interact_load_song():
         print()
         try:
             out = int(name)
-            if out== -1:
-                #go back to main menu
+            if out == -1:
+                # go back to main menu
                 return -1
         except ValueError:
             pass
         try:
             song = Song.load_song(name)
-            prompt = (f'{check_emoji} Found Song: {song.name}')
+            song.saved = True
+            prompt = f"{check_emoji} Found Song: {song.name}"
             print_animated(prompt)
             return song
         except FileNotFoundError:
@@ -160,7 +165,9 @@ def display_existing_files():
     if os.path.exists(PICKLED_FOLDER) and os.path.isdir(PICKLED_FOLDER):
         files = os.listdir(PICKLED_FOLDER)
 
-        pickled_files = [os.path.splitext(file)[0] for file in files if file.endswith('.pk1')]
+        pickled_files = [
+            os.path.splitext(file)[0] for file in files if file.endswith(".pk1")
+        ]
 
         print("Currently saved songs: ")
         for file in pickled_files:
@@ -196,19 +203,19 @@ def interact_scales(m_scale):
             print("Error:", e)
             pass
 
+
 def print_line():
     print()
     print("__________________________________________________________________")
     print()
 
+
 def get_selection(prompt, menu_size):
     while True:
         try:
-            print_animated(f"\nEnter:\n{prompt}\n-1 to go back or quit the program\n\n" )
+            print(f"\nEnter:\n{prompt}\n-1 to go back or quit the program\n\n")
             # time.sleep(QUICK_PAUSE)
-            res = int(
-                input("Input: ")
-            )
+            res = int(input("Input: "))
         except ValueError:
             print(f"\nError.  Please enter a number\n")
             pass
@@ -220,11 +227,12 @@ def get_selection(prompt, menu_size):
             else:
                 return res
 
+
 def get_yes_no(prompt):
-    print_animated(prompt)
+    print(prompt)
     while True:
         try:
-            res = int(input(f' 1: Yes\n-1: No\nInput: '))
+            res = int(input(f" 1: Yes\n-1: No\nInput: "))
         except ValueError:
             print(f"{x_emoji}Error. Enter 1 or -1")
             pass
@@ -234,15 +242,10 @@ def get_yes_no(prompt):
             elif res == -1:
                 return False
 
-def print_animated(prompt, initial_speed=0.04, acceleration = 0.01):
-    speed = initial_speed
-    for i, c in enumerate(prompt, start=1):
-        print(c, end="", flush=True)
-        if speed > 0.03:
-            speed -= acceleration
+def print_animated(prompt, speed=0.045):
+    for c in prompt:
+        print(c, end = "", flush = True)
         time.sleep(speed)
-    time.sleep(QUICK_PAUSE)
-
 
 
 
@@ -288,14 +291,23 @@ def is_valid_chords(chords):
     for chord in chords:
         if chord != " ":
             if chord not in NOTES:
-                if chord != "-" and chord != "_" and chord!= 'm' and chord!='#' and chord!= 'b' and chord!= '\n' and chord!= ' ':
+                if (
+                    chord != "-"
+                    and chord != "_"
+                    and chord != "m"
+                    and chord != "#"
+                    and chord != "b"
+                    and chord != "\n"
+                    and chord != " "
+                ):
                     raise ValueError(f"{chord} is invalid")
 
 
 def generate_file_path(folder, file_name, ext):
-    file_name = file_name.lower().replace(' ', '') + ext
+    file_name = file_name.lower().replace(" ", "") + ext
     file_path = os.path.join(folder, file_name)
     return file_path
+
 
 def create_chord_progression_section():
     chords = ""
@@ -306,7 +318,7 @@ def create_chord_progression_section():
                 return chords
             else:
                 is_valid_chords(chords)
-                chords += chord_input + '\n'
+                chords += chord_input + "\n"
         except ValueError as e:
             print(e)
             print("Please rewrite the section")
@@ -314,11 +326,9 @@ def create_chord_progression_section():
             pass
 
 
-
-
 class Song:
     def __init__(self, name):
-        self.file_path = generate_file_path(PICKLED_FOLDER, name, '.pk1')
+        self.file_path = generate_file_path(PICKLED_FOLDER, name, ".pk1")
         if os.path.isfile(self.file_path):
             raise ValueError("Song already exists")
         self.name = name
@@ -326,7 +336,6 @@ class Song:
         self.sections = {}
         # Variable to keep track if there are recent changes
         self.saved = False
-
 
     def create_new_section(self):
         print_line()
@@ -343,24 +352,25 @@ class Song:
             )
             print_line()
             if section in self.sections:
-                print(f'{x_emoji} {section} already exists.')
-            elif section == '-1':
+                print(f"{x_emoji} {section} already exists.")
+            elif section == "-1":
                 return
             else:
                 break
         print_line()
-        print(f'Write out a new chord progression for the {section}\nEnter -1 to finish')
+        print(
+            f"Write out a new chord progression for the {section}\nEnter -1 to finish"
+        )
         print("Chord Progression:")
         chords = create_chord_progression_section()
         self.sections[section] = chords
         self.saved = False
-        prompt = f'New section: {section}, added...'
+        prompt = f"New section: {section}, added..."
         self.saved = False
         print_animated(prompt)
-        print(self, end='')
+        print(self, end="")
         time.sleep(DISPLAY_PAUSE)
-                
-    
+
     def get_title(self):
         return self.name
 
@@ -370,20 +380,19 @@ class Song:
         for section, chords in self.sections.items():
             result += f"{section}:\n{chords}\n\n"
         return result[:-2]
-    
 
     # Using pickle to store object
     # https://www.geeksforgeeks.org/how-to-use-pickle-to-save-and-load-variables-in-python/
     def save_song(self):
-        folder = 'text_files'
+        folder = "text_files"
         if not os.path.exists(folder):
             os.makedirs(folder)
-        file_path = generate_file_path(folder, self.name, '.txt')
+        file_path = generate_file_path(folder, self.name, ".txt")
         with open(file_path, "w") as file:
             file.write(str(self))
         self.save_song_pickle()
         self.saved = True
-        prompt = f'{self.name} saved in {file_path}'
+        prompt = f"{self.name} saved in {file_path}"
         print_animated(prompt, 0.03)
 
     def save_song_pickle(self):
@@ -396,14 +405,14 @@ class Song:
 
     @classmethod
     def load_song(cls, name):
-        file_path = generate_file_path(PICKLED_FOLDER, name, '.pk1')
-        with open(file_path, 'rb') as file:
+        file_path = generate_file_path(PICKLED_FOLDER, name, ".pk1")
+        with open(file_path, "rb") as file:
             result_song = pickle.load(file)
         return result_song
 
     def edit_section(self):
         while True:
-            print(f'\t\tEditing {self.name}')
+            print(f"\t\tEditing {self.name}")
             if len(self.sections) == 0:
                 print("There are no song sections yet. Consider creating new section")
                 return
@@ -414,58 +423,58 @@ class Song:
             print(result)
 
             new_sec = input("Enter a section to edit: ").strip()
-            if new_sec == '-1':
+            if new_sec == "-1":
                 break
             print_line()
             if new_sec in self.sections:
-                result = ''
-                prompt = (f'Editing {new_sec} Section:')
+                result = ""
+                prompt = f"Editing {new_sec} Section:"
                 print_animated(prompt)
-                print(f'\n{self.sections[new_sec]}\n')
+                print(f"\n{self.sections[new_sec]}\n")
                 print("Hint: You can enter nothing to delete the section")
                 new_chords = input(f"Enter new chord progression for the {new_sec}: ")
                 if new_chords == "-1":
                     return
                 elif new_chords == "":
-                    prompt = f'Do you want to delete {new_sec}\n'
+                    prompt = f"Do you want to delete {new_sec}\n"
                     del_res = get_yes_no(prompt)
                     if del_res:
                         del self.sections[new_sec]
                         self.saved = False
-                        prompt = f'{new_sec} deleted'
+                        prompt = f"{new_sec} deleted"
                         print_animated(prompt)
                         print()
                         print_animated("Updated Song: ")
-                        print(self, end='')
+                        print(self, end="")
                         return
                     else:
                         continue
                 try:
                     is_valid_chords(new_chords)
                 except ValueError as e:
-                    print(f'{x_emoji}Error: {e}')
-                    print(f'{new_sec} not updated.')
+                    print(f"{x_emoji}Error: {e}")
+                    print(f"{new_sec} not updated.")
                     continue
 
                 print_line()
-                prompt = (f'Do you want to update {new_sec}?\nFROM:\n')
+                prompt = f"Do you want to update {new_sec}?\nFROM:\n"
                 print_animated(prompt)
-                print(f'{self.sections[new_sec]}\n ')
+                print(f"{self.sections[new_sec]}\n ")
                 print_animated("TO\n")
                 print(self.sections[new_sec])
                 while True:
                     print(f" 1: Yes\n-1: No")
                     confirm = input("Input: ")
-                    if confirm == '1':
+                    if confirm == "1":
                         self.sections[new_sec] = new_chords
                         self.saved = False
-                        prompt = f'{x_emoji}Done!'
+                        prompt = f"{x_emoji}Done!"
                         print_animated(prompt)
                         print(f"{new_sec} updated to:\n {new_chords}")
                         time.sleep(DISPLAY_PAUSE)
                         return
-                    elif confirm == '-1':
-                        print_animated(f'Aborted editing {new_sec}')
+                    elif confirm == "-1":
+                        print_animated(f"Aborted editing {new_sec}")
                         break
                     else:
                         print(f"{x_emoji}Input: '{confirm}' is invalid")
@@ -505,10 +514,10 @@ class Song:
                         chord = chords[i]
                         if chord in NOTES:
                             if i + 1 < len(chords):
-                                if chords[i+ 1] == '#':
+                                if chords[i + 1] == "#":
                                     # ignore the #
                                     i += 1
-                                    chord += '#'
+                                    chord += "#"
                             index = NOTES.index(chord)
                             if self.transpose_amount < 0:
                                 amount += SIZE
@@ -520,7 +529,7 @@ class Song:
                     self.sections[section] = result
                     self.saved = False
                     print_animated("Newly transposed Version:")
-                    print(self, end='')
+                    print(self, end="")
                     time.sleep(DISPLAY_PAUSE)
                     return
 
