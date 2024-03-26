@@ -23,6 +23,7 @@ QUICK_PAUSE = 0.8
 
 x_emoji = "❌ "
 check_emoji = "✅"
+warning_emoji = "⚠️ "
 
 def main():
     print(
@@ -68,6 +69,13 @@ def main():
                 if write_selection == 5:
                     song.save_song()
                 if write_selection == -1:
+                    if song.saved == False:
+                        prompt = f'{warning_emoji}Warning... There are unsaved changes to {song.name}.  Quit with out saving?\n'
+                        user_yes = get_yes_no(prompt)
+                        if user_yes:
+                            break
+                        else:
+                            continue
                     break
         elif selection == 3:
             while True:
@@ -212,12 +220,12 @@ def get_selection(prompt, menu_size):
                 return res
 
 def get_yes_no(prompt):
-    print(prompt)
+    print_animated(prompt)
     while True:
         try:
             res = int(input(f' 1: Yes\n-1: No\nInput: '))
         except ValueError:
-            print("Enter 1 or -1")
+            print(f"{x_emoji}Error. Enter 1 or -1")
             pass
         else:
             if res == 1:
@@ -234,7 +242,7 @@ def print_animated(prompt, initial_speed=0.05, acceleration = 0.0008):
         else:
             time.sleep(0)
         # Increase speed gradually
-        speed -= acceleration * i
+        speed -= acceleration
 
 
 
@@ -317,6 +325,8 @@ class Song:
         self.name = name
         self.transpose_amount = 0
         self.sections = {}
+        # Variable to keep track if there are recent changes
+        self.saved = False
 
 
     def create_new_section(self):
@@ -344,7 +354,9 @@ class Song:
         print("Chord Progression:")
         chords = create_chord_progression_section()
         self.sections[section] = chords
+        self.saved = False
         prompt = f'New section: {section}, added...'
+        self.saved = False
         print_animated(prompt)
         time.sleep(QUICK_PAUSE)
         print(self, end='')
@@ -360,6 +372,7 @@ class Song:
         for section, chords in self.sections.items():
             result += f"{section}:\n{chords}\n\n"
         return result[:-2]
+    
 
     # Using pickle to store object
     # https://www.geeksforgeeks.org/how-to-use-pickle-to-save-and-load-variables-in-python/
@@ -371,6 +384,7 @@ class Song:
         with open(file_path, "w") as file:
             file.write(str(self))
         self.save_song_pickle()
+        self.saved = True
         prompt = f'{self.name} saved in {file_path}'
         print_animated(prompt, 0.03)
         time.sleep(0.8)
@@ -415,10 +429,11 @@ class Song:
                 if new_chords == "-1":
                     return
                 elif new_chords == "":
-                    prompt = f'Do you want to delete {new_sec}'
+                    prompt = f'Do you want to delete {new_sec}\n'
                     del_res = get_yes_no(prompt)
                     if del_res:
                         del self.sections[new_sec]
+                        self.saved = False
                         prompt = f'{new_sec} deleted'
                         print_animated(prompt)
                         time.sleep(QUICK_PAUSE)
@@ -447,6 +462,7 @@ class Song:
                     confirm = input("Input: ")
                     if confirm == '1':
                         self.sections[new_sec] = new_chords
+                        self.saved = False
                         prompt = f'{x_emoji}Done!'
                         print_animated(prompt)
                         print(f"{new_sec} updated to:\n {new_chords}")
@@ -506,6 +522,7 @@ class Song:
                         i += 1
                     print(f"Chords transposed {amount} semitones")
                     self.sections[section] = result
+                    self.saved = False
                     print_animated("Newly transposed Version:")
                     print(self, end='')
                     time.sleep(DISPLAY_PAUSE)
