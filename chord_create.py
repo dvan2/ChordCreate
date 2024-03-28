@@ -1,6 +1,7 @@
 import os
 import pickle
 import time
+import re
 
 NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
 SIZE = len(NOTES)
@@ -246,6 +247,7 @@ def print_animated(prompt, speed=0.045):
     for c in prompt:
         print(c, end = "", flush = True)
         time.sleep(speed)
+    time.sleep(QUICK_PAUSE)
 
 
 
@@ -288,19 +290,30 @@ def scale(scale):
 
 
 def is_valid_chords(chords):
-    for chord in chords:
-        if chord != " ":
-            if chord not in NOTES:
-                if (
-                    chord != "-"
-                    and chord != "_"
-                    and chord != "m"
-                    and chord != "#"
-                    and chord != "b"
-                    and chord != "\n"
-                    and chord != " "
-                ):
-                    raise ValueError(f"{chord} is invalid")
+    chord_pattern = re.compile(r'^(([A-G](#|b)?m?(5|7|9)?)?(\s|-|$))+$')
+
+    if chord_pattern.match(chords.strip()):
+        return True
+    else:
+        return False
+
+
+    # for chord in chords:
+    #     if chord.strip() != "":
+    #         if not chord_pattern.match(chord.strip()):
+    #             return False
+    # return True
+            # if chord not in NOTES:
+            #     if (
+            #         chord != "-"
+            #         and chord != "_"
+            #         and chord != "m"
+            #         and chord != "#"
+            #         and chord != "b"
+            #         and chord != "\n"
+            #         and chord != " "
+            #     ):
+            #         raise ValueError(f"{chord} is invalid")
 
 
 def generate_file_path(folder, file_name, ext):
@@ -412,11 +425,11 @@ class Song:
 
     def edit_section(self):
         while True:
-            print(f"\t\tEditing {self.name}")
             if len(self.sections) == 0:
                 print("There are no song sections yet. Consider creating new section")
                 return
             print_line()
+            print(f"\t\tEditing {self.name}")
             result = "Available sections to edit: \n"
             for sec in self.sections:
                 result += sec + "\n"
