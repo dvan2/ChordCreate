@@ -60,24 +60,38 @@ def test_invalid_chords():
     assert is_valid_chords("Invalid") == False
 
 inputs = [
-    "Verse", "A B C D", "-1", #add verse
-    "Chorus", "E F G", "-1" #add another section
+    "Verse", "C C Em F", "C C Em F" , "C C G G", "-1", 
+    "Chorus", "F G C Em", "F G C Em", "F G C Em", "F F Fm G G", "-1" ,
+    "2", "2", "",
+
     ]
 
 @patch('builtins.input', side_effect= inputs)
 def test_chord_progression(mock_inputs):
-    song = Song("New Song")
+    song = Song("Untill I Found You")
 
     song.create_new_section()
-    assert "New Song" in str(song)
+    assert "Untill I Found You" in str(song)
     assert "Verse" in str(song)
-    assert "A B C D" in str(song)
+    assert "C C Em F" in str(song)
 
     # create a chorus
     song.create_new_section()
     assert "Chorus" in str(song)
-    assert "E F G" in str(song)
+    assert "F F Fm G G" in str(song)
+
+    song.transpose()
+    assert "Verse" in str(song)
+    assert "D D F#m G" in str(song)
+
+    song.transpose()
+    assert "Verse" in str(song)
+    assert "E E G#m A" in str(song)
+
+    #revert to original
+    song.transpose()
+    assert "C C Em F" in str(song)
 
 
 if __name__ == "__main__":
-    test_invalid_chords()
+    test_chord_progression()

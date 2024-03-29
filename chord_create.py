@@ -17,10 +17,17 @@ MINOR_SCALES = [0, 2, 3, 5, 7, 8, 10, 0]
 # Where to save pickled files
 PICKLED_FOLDER = "pickled_files"
 
-# Used for displaying song
-DISPLAY_PAUSE = 2
-MEDIUM_PAUSE = 1.2
-QUICK_PAUSE = 0.8
+# # Used for displaying song
+# DISPLAY_PAUSE = 2
+# MEDIUM_PAUSE = 1.2
+# QUICK_PAUSE = 0.8
+
+#remove after test
+DISPLAY_PAUSE = 0
+MEDIUM_PAUSE = 0
+QUICK_PAUSE = 0
+
+
 
 x_emoji = "❌ "
 check_emoji = "✅"
