@@ -16,16 +16,17 @@ MINOR_SCALES = [0, 2, 3, 5, 7, 8, 10, 0]
 
 # Where to save pickled files
 PICKLED_FOLDER = "pickled_files"
+TEXT_FOLDER = "text_files"
 
 # # Used for displaying song
-# DISPLAY_PAUSE = 2
-# MEDIUM_PAUSE = 1.2
-# QUICK_PAUSE = 0.8
+DISPLAY_PAUSE = 2
+MEDIUM_PAUSE = 1.2
+QUICK_PAUSE = 0.8
 
 #remove after test
-DISPLAY_PAUSE = 0
-MEDIUM_PAUSE = 0
-QUICK_PAUSE = 0
+# DISPLAY_PAUSE = 0
+# MEDIUM_PAUSE = 0
+# QUICK_PAUSE = 0
 
 
 
@@ -237,10 +238,18 @@ def get_selection(prompt, menu_size):
 
 
 def get_yes_no(prompt):
+    """
+    Prompts user and asks for yes or no
+
+    Returns:
+        True if user responds Yes.
+        False if user responds No.
+    """
     print(prompt)
     while True:
         try:
             res = int(input(f" 1: Yes\n-1: No\nInput: "))
+            print_line()
         except ValueError:
             print(f"{x_emoji}Error. Enter 1 or -1")
             pass
@@ -324,6 +333,9 @@ def is_valid_chords(chords):
 
 
 def generate_file_path(folder, file_name, ext):
+    """
+    Returns a file path by joining all parameters
+    """
     file_name = file_name.lower().replace(" ", "") + ext
     file_path = os.path.join(folder, file_name)
     return file_path
@@ -333,22 +345,25 @@ def create_chord_progression_section():
     chords = ""
     while True:
         chord_input = input()
-        try:
-            if chord_input == "-1":
-                return chords
+        if chord_input == "-1":
+            return chords
+        else:
+            if chord_input == "":
+                lines = chords.split("\n")
+                last_line = lines[-2]
+                chords += last_line + "\n"
             else:
-                is_valid_chords(chords)
-                chords += chord_input + "\n"
-        except ValueError as e:
-            print(e)
-            print("Please rewrite the section")
-            chord = ""
-            pass
-
+                if is_valid_chords(chord_input):
+                    chords += chord_input + "\n"
+                else:
+                    print(f'{chord_input} has an invalid Chord key.  Please rewrite from begginging.')
+                    print_line()
+                    chords = ""
 
 class Song:
     def __init__(self, name):
         self.file_path = generate_file_path(PICKLED_FOLDER, name, ".pk1")
+        self.text_file_path = generate_file_path(TEXT_FOLDER, name, ".txt")
         if os.path.isfile(self.file_path):
             raise ValueError("Song already exists")
         self.name = name
@@ -379,7 +394,7 @@ class Song:
                 break
         print_line()
         print(
-            f"Write out a new chord progression for the {section}\nEnter -1 to finish"
+            f"Write out a new chord progression for the {section}\nNote: Enter -1 to finish\nEnter nothing to duplicate line"
         )
         print("Chord Progression:")
         chords = create_chord_progression_section()
@@ -403,25 +418,53 @@ class Song:
 
     # Using pickle to store object
     # https://www.geeksforgeeks.org/how-to-use-pickle-to-save-and-load-variables-in-python/
+        
     def save_song(self):
-        folder = "text_files"
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        file_path = generate_file_path(folder, self.name, ".txt")
-        with open(file_path, "w") as file:
-            file.write(str(self))
-        self.save_song_pickle()
-        self.saved = True
-        prompt = f"{self.name} saved in {file_path}"
-        print_animated(prompt, 0.03)
-
-    def save_song_pickle(self):
         folder = PICKLED_FOLDER
         if not os.path.exists(folder):
             os.makedirs(folder)
+        if not os.path.exists(TEXT_FOLDER):
+            os.makedirs(TEXT_FOLDER)
 
-        with open(self.file_path, "wb") as file:
-            pickle.dump(self, file)
+        # If first time saving, prompt for a location
+        if not os.path.exists(self.file_path):
+            default_name = self.file_path.split('\\')[1]
+            print_animated(f'Default file name: {default_name}.\n')
+
+            yes = get_yes_no("Would you like to change the file name?")
+            if yes:
+                self.create_user_path()
+
+        while True:
+            # Check existing file
+            if os.path.exists(self.file_path):
+                print(f'{warning_emoji}{self.file_path} already exists\n')
+                print("Enter a different file name.")
+                print_line()
+                self.create_user_path()
+            else:
+                with open(self.file_path, "wb") as file:
+                    pickle.dump(self, file)
+                with open(self.text_file_path, "w") as file:
+                    file.write(str(self))
+                if not os.path.exists(self.file_path):
+                    print(f'{self.file_path} is an invalid file name.')
+                    self.create_user_path()
+                else:
+                    break
+
+        self.saved = True
+        prompt = f"{self.name} saved in {self.file_path}"
+        print_animated(prompt, 0.03)
+
+    def create_user_path(self):
+            user_file_name = input(f"Enter filename for {self.name}: ")
+            user_path = generate_file_path(PICKLED_FOLDER, user_file_name, '.pk1')
+            user_text_path = generate_file_path(TEXT_FOLDER, user_file_name,'.txt')
+            self.file_path = user_path
+            self.text_file_path = user_text_path
+
+
 
     @classmethod
     def load_song(cls, name):
