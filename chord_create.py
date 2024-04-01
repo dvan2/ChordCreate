@@ -23,11 +23,10 @@ DISPLAY_PAUSE = 2
 MEDIUM_PAUSE = 1.2
 QUICK_PAUSE = 0.8
 
-#remove after test
+# remove after test
 # DISPLAY_PAUSE = 0
 # MEDIUM_PAUSE = 0
 # QUICK_PAUSE = 0
-
 
 
 x_emoji = "❌ "
@@ -126,7 +125,6 @@ def main():
         if selection == -1:
             break
 
-
 def create_song():
     while True:
         name = input("\n\nEnter a name for the song: ")
@@ -154,6 +152,7 @@ def interact_load_song():
         print()
         try:
             out = int(name)
+            print_line()
             if out == -1:
                 # go back to main menu
                 return -1
@@ -162,6 +161,7 @@ def interact_load_song():
         try:
             song = Song.load_song(name)
             song.saved = True
+            song.loaded = True
             prompt = f"{check_emoji} Found Song: {song.name}"
             print_animated(prompt)
             return song
@@ -259,12 +259,12 @@ def get_yes_no(prompt):
             elif res == -1:
                 return False
 
+
 def print_animated(prompt, speed=0.045):
     for c in prompt:
-        print(c, end = "", flush = True)
+        print(c, end="", flush=True)
         time.sleep(speed)
     time.sleep(QUICK_PAUSE)
-
 
 
 def chord(chord):
@@ -306,30 +306,29 @@ def scale(scale):
 
 
 def is_valid_chords(chords):
-    chord_pattern = re.compile(r'^(([A-G](#|b)?m?(5|7|9)?)?(\s|-|$))+$')
+    chord_pattern = re.compile(r"^(([A-G](#|b)?m?(5|7|9)?)?(\s|-|$))+$")
 
     if chord_pattern.match(chords.strip()):
         return True
     else:
         return False
 
-
     # for chord in chords:
     #     if chord.strip() != "":
     #         if not chord_pattern.match(chord.strip()):
     #             return False
     # return True
-            # if chord not in NOTES:
-            #     if (
-            #         chord != "-"
-            #         and chord != "_"
-            #         and chord != "m"
-            #         and chord != "#"
-            #         and chord != "b"
-            #         and chord != "\n"
-            #         and chord != " "
-            #     ):
-            #         raise ValueError(f"{chord} is invalid")
+    # if chord not in NOTES:
+    #     if (
+    #         chord != "-"
+    #         and chord != "_"
+    #         and chord != "m"
+    #         and chord != "#"
+    #         and chord != "b"
+    #         and chord != "\n"
+    #         and chord != " "
+    #     ):
+    #         raise ValueError(f"{chord} is invalid")
 
 
 def generate_file_path(folder, file_name, ext):
@@ -356,9 +355,12 @@ def create_chord_progression_section():
                 if is_valid_chords(chord_input):
                     chords += chord_input + "\n"
                 else:
-                    print(f'{chord_input} has an invalid Chord key.  Please rewrite from begginging.')
+                    print(
+                        f"{chord_input} has an invalid Chord key.  Please rewrite from begginging."
+                    )
                     print_line()
                     chords = ""
+
 
 class Song:
     def __init__(self, name):
@@ -371,6 +373,9 @@ class Song:
         self.sections = {}
         # Variable to keep track if there are recent changes
         self.saved = False
+
+        # If it's loaded, we don't need to check for same file name
+        self.loaded = False
 
     def create_new_section(self):
         print_line()
@@ -418,7 +423,7 @@ class Song:
 
     # Using pickle to store object
     # https://www.geeksforgeeks.org/how-to-use-pickle-to-save-and-load-variables-in-python/
-        
+
     def save_song(self):
         folder = PICKLED_FOLDER
         if not os.path.exists(folder):
@@ -428,8 +433,8 @@ class Song:
 
         # If first time saving, prompt for a location
         if not os.path.exists(self.file_path):
-            default_name = self.file_path.split('\\')[1]
-            print_animated(f'Default file name: {default_name}.\n')
+            default_name = self.file_path.split("\\")[1]
+            print_animated(f"Default file name: {default_name}.\n")
 
             yes = get_yes_no("Would you like to change the file name?")
             if yes:
@@ -437,8 +442,8 @@ class Song:
 
         while True:
             # Check existing file
-            if os.path.exists(self.file_path):
-                print(f'{warning_emoji}{self.file_path} already exists\n')
+            if os.path.exists(self.file_path) and not self.loaded:
+                print(f"{warning_emoji}{self.file_path} already exists\n")
                 print("Enter a different file name.")
                 print_line()
                 self.create_user_path()
@@ -448,7 +453,7 @@ class Song:
                 with open(self.text_file_path, "w") as file:
                     file.write(str(self))
                 if not os.path.exists(self.file_path):
-                    print(f'{self.file_path} is an invalid file name.')
+                    print(f"{self.file_path} is an invalid file name.")
                     self.create_user_path()
                 else:
                     break
@@ -458,13 +463,11 @@ class Song:
         print_animated(prompt, 0.03)
 
     def create_user_path(self):
-            user_file_name = input(f"Enter filename for {self.name}: ")
-            user_path = generate_file_path(PICKLED_FOLDER, user_file_name, '.pk1')
-            user_text_path = generate_file_path(TEXT_FOLDER, user_file_name,'.txt')
-            self.file_path = user_path
-            self.text_file_path = user_text_path
-
-
+        user_file_name = input(f"Enter filename for {self.name}: ")
+        user_path = generate_file_path(PICKLED_FOLDER, user_file_name, ".pk1")
+        user_text_path = generate_file_path(TEXT_FOLDER, user_file_name, ".txt")
+        self.file_path = user_path
+        self.text_file_path = user_text_path
 
     @classmethod
     def load_song(cls, name):
